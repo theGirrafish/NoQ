@@ -1,4 +1,4 @@
-package ca.mcgill.conuhacks2018.noq;
+package ca.mcgill.mchacks2018.noq;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;

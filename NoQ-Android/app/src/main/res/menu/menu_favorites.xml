@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="ca.mcgill.conuhacks2018.noq.Favorites">
+    tools:context="ca.mcgill.mchacks2018.noq.Favorites">
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

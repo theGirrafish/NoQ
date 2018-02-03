@@ -1,4 +1,4 @@
-package ca.mcgill.conuhacks2018.noq;
+package ca.mcgill.mchacks2018.noq;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("ca.mcgill.conuhacks2018.noq", appContext.getPackageName());
+        assertEquals("ca.mcgill.mchacks2018.noq", appContext.getPackageName());
     }
 }
