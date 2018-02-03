@@ -40,6 +40,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import static com.google.android.gms.location.places.AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT;
@@ -49,7 +50,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float DEFAULT_ZOOM = 18;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private boolean mLocationPermissionGranted;
+    private boolean mLocationPermissionGranted = true;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final String TAG = "MapsActivity";
     private LatLng mDefaultLocation = new LatLng(0, 0);
@@ -122,8 +123,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
-                }
-                else {
+                } else {
                     return;
                 }
             }
@@ -160,10 +160,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         getLocationPermission();
         updateLocationUI();
+        getDeviceLocation();
+//        System.out.println("Current location: " + mLastKnownLocation.toString());
         createAutocompleteFragment();
     }
 
-    private void createAutocompleteFragment(){
+    private void createAutocompleteFragment() {
         getDeviceLocation();
         PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
@@ -225,26 +227,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
         try {
             if (mLocationPermissionGranted) {
-                Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task task) {
-                        if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
-                            mLastKnownLocation = (Location) task.getResult();
-                            if (mLastKnownLocation != null) {
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                        new LatLng(mLastKnownLocation.getLatitude(),
-                                                mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                mFusedLocationProviderClient.getLastLocation()
+                        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                // Got last known location. In some rare situations this can be null.
+                                if (location != null) {
+                                    // Logic to handle location object
+                                    mLastKnownLocation = location;
+                                    System.out.println(mLastKnownLocation.toString());
+                                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                            new LatLng(mLastKnownLocation.getLatitude(),
+                                                    mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                                } else {
+                                    System.out.println("Current location is null. Using defaults.");
+                                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+                                }
+
                             }
-                        } else {
-                            Log.d(TAG, "Current location is null. Using defaults.");
-                            Log.e(TAG, "Exception: %s", task.getException());
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                            mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                        }
-                    }
-                });
+                        });
             }
         } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
