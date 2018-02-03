@@ -1,0 +1,34 @@
+namespace ca.mcgill.mchacks2018.noq.model;
+
+class User
+{
+  autounique id;
+  username;
+  password;
+  Integer age;
+  Integer points;
+}
+
+class Location
+{
+  unique id;
+  name;
+  strtNum;
+  address;
+  Integer qTime;
+  JSONObject checkTimes;
+}
+
+class Registration
+{
+  autounique id;
+  * -> 1 User user;
+  * -> 1 Location event;
+}
+
+class RegistrationManager
+{
+  1 -> * Registration registrations;
+  1 -> * User users;
+  1 -> * Location locations;
+}
