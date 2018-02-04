@@ -17,7 +17,7 @@
     <string name="pick_place">Choose a place</string>
     <string name="maps_button">Go to Map</string>
     <string name="clear_markers">Clear</string>
-    <string name="slogan">Because time is precious</string>
+    <string name="slogan">""</string>
     <string name="title_activity_register">Sign up</string>
     <string name="action_sign_up">Sign up</string>
     <string name="prompt_age">Age</string>
