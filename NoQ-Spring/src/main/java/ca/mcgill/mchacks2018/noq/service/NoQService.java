@@ -90,9 +90,48 @@ public class NoQService {
 
 	public Location getLocationById(String id) throws InvalidInputException {
 		for (Location location : rm.getLocations()) {
-			if (location.getName().equals(id))
+			if (location.getId().equals(id))
 				return location;
 		}
 		throw new InvalidInputException("Location does not exist!");
+	}
+
+	public User updateUserPoints(User u, int points) throws InvalidInputException {
+		int newPoints = u.getPoints() + points;
+
+		rm.getRMUsers().get(rm.indexOfUser(u)).setPoints(newPoints);
+		persX.sql.updateUserPoints(u.getId(), newPoints);
+		u.setPoints(newPoints);
+		return u;
+	}
+
+	public User updateUserPassword(User u, String password) throws InvalidInputException {
+		rm.getRMUsers().get(rm.indexOfUser(u)).setPassword(password);
+		persX.sql.updateUserPassword(u.getId(), password);
+		u.setPassword(password);
+		return u;
+	}
+
+	public User updateLocationPassword(User u, String password) throws InvalidInputException {
+		rm.getRMUsers().get(rm.indexOfUser(u)).setPassword(password);
+		persX.sql.updateUserPassword(u.getId(), password);
+		u.setPassword(password);
+		return u;
+	}
+
+	public Location updateLocationCheckIn(String id, String username, String checkIn) throws InvalidInputException {
+		Location l = getLocationById(id);
+		JSONObject checkTimes = persX.sql.updateLocationCheckIn(id, username, checkIn);
+		rm.getRMLocations().get(rm.indexOfLocation(l)).setCheckTimes(checkTimes);
+		l.setCheckTimes(checkTimes);
+		return l;
+	}
+
+	public Location updateLocationCheckOut(String id, String username, String checkOut) throws InvalidInputException {
+		Location l = getLocationById(id);
+		JSONObject checkTimes = persX.sql.updateLocationCheckOut(id, username, checkOut);
+		rm.getRMLocations().get(rm.indexOfLocation(l)).setCheckTimes(checkTimes);
+		l.setCheckTimes(checkTimes);
+		return l;
 	}
 }

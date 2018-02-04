@@ -215,6 +215,14 @@ public class RegistrationManager
     return wasAdded;
   }
 
+  public List<User> getRMUsers() {
+    return users;
+  }
+
+  public List<Location> getRMLocations() {
+    return locations;
+  }
+
   public void setUsers(ArrayList<User> users) {
     this.users = users;
   }

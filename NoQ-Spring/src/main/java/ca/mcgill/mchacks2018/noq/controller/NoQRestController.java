@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,10 +39,12 @@ public class NoQRestController {
 
 	// Conversion methods (not part of the API)
 	private LocationDto convertToDto(Location l) {
+		modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 		return modelMapper.map(l, LocationDto.class);
 	}
 
 	private UserDto convertToDto(User user) {
+		modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 		return modelMapper.map(user, UserDto.class);
 	}
 
@@ -92,13 +96,49 @@ public class NoQRestController {
 	}
 
 	@PostMapping(value = {"/locations/{id}", "/locations/{id}/"})
-	public LocationDto createLocation(@PathVariable ("id") String id,
+	public LocationDto createLocation(@PathVariable("id") String id,
 								   	  @RequestParam String name,
 								   	  @RequestParam String strtNum,
 									  @RequestParam String address,
 									  @RequestParam(value="qTime", defaultValue="-1") int qTime
 								   	  ) throws InvalidInputException {
 		Location location = service.createLocation(id, name, strtNum, address, qTime, emptyJSON());
+		return convertToDto(location);
+	}
+
+	@PatchMapping(value = {"/users/points/{username}", "/users/points/{username}/"})
+	public UserDto updateUserPoints(@PathVariable("username") String username,
+									@RequestParam int points
+									) throws InvalidInputException {
+		User user = service.getUserByName(username);
+		user = service.updateUserPoints(user, points);
+		return convertToDto(user);
+	}
+
+	@PatchMapping(value = {"/users/pass/{username}", "/users/pass/{username}/"})
+	public UserDto updateUserPassword(@PathVariable("username") String username,
+								 	  @RequestParam String password
+								 	  ) throws InvalidInputException {
+		User user = service.getUserByName(username);
+		user = service.updateUserPassword(user, password);
+		return convertToDto(user);
+	}
+
+	@PatchMapping(value = {"/locations/checkIn/{id}", "/locations/checkIn/{id}/"})
+	public LocationDto updateLocationCheckIn(@PathVariable("id") String id,
+											 @RequestParam String username,
+											 @RequestParam String checkIn
+											 ) throws InvalidInputException {
+		Location location = service.updateLocationCheckIn(id, username, checkIn);
+		return convertToDto(location);
+	}
+
+	@PatchMapping(value = {"/locations/checkOut/{id}", "/locations/checkOut/{id}/"})
+	public LocationDto updateLocationCheckOut(@PathVariable("id") String id,
+											  @RequestParam String username,
+											  @RequestParam String checkOut
+											  ) throws InvalidInputException {
+		Location location = service.updateLocationCheckOut(id, username, checkOut);
 		return convertToDto(location);
 	}
 
