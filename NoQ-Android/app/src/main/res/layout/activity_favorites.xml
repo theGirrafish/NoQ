@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/ActivityBG"
     android:fitsSystemWindows="true"
     tools:context="ca.mcgill.mchacks2018.noq.Favorites">
 
@@ -21,8 +22,7 @@
             android:fitsSystemWindows="true"
             app:contentScrim="?attr/colorPrimary"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:toolbarId="@+id/toolbar"
-            app:titleEnabled="true">
+            app:toolbarId="@+id/toolbar">
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -36,14 +36,42 @@
 
     <include layout="@layout/content_favorites" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
+
+    <Button
+        android:id="@+id/button_information"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        app:layout_anchor="@id/app_bar"
-        app:layout_anchorGravity="bottom|end"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        android:text="+"
+        android:textSize="25dp"
+        android:onClick="switchToDataInput"
+        android:background="@drawable/button_bg_rounded_corners"
+        android:layout_alignParentLeft="true"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="30dp"
+        />
+
+    <Button
+        android:id="@+id/button_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Maps"
+        android:onClick="switchToMap"
+        android:background="@drawable/button_bg_rounded_corners"
+        android:layout_alignParentRight="true"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="30dp"/>
+
+
+
+    <android.support.v7.widget.RecyclerView
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_below="@+id/appbar"
+        android:padding="50dp"
+        android:id="@+id/my_recycler_view"
+        android:scrollbars="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
 
 
 </android.support.design.widget.CoordinatorLayout>

@@ -110,9 +110,9 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
         getLoaderManager().initLoader(0, null, this);
     }
 
-    public void switchToMapLogin() {
-        Intent mapsIntent = new Intent(this, MapsActivity.class);
-        startActivity(mapsIntent);
+    public void switchToFavorites() {
+        Intent favoritesIntent = new Intent(this, Favorites.class);
+        startActivity(favoritesIntent);
     }
 
     private boolean mayRequestContacts() {
@@ -346,7 +346,6 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
             HttpUtils.get("/users/", new RequestParams(), new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
@@ -383,7 +382,6 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
                 }
             }
 
-            // TODO: register the new account here.
             HttpUtils.post(String.format("/users/%s?password=%s&age=%s", mUsername, mPassword, mAge), new RequestParams(), new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
@@ -408,7 +406,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
             showProgress(false);
 
             if (success) {
-                switchToMapLogin();
+                switchToFavorites();
             } else {
                 mEmailView.setError(getString(R.string.error_account_exists));
                 mEmailView.requestFocus();

@@ -1,11 +1,11 @@
 package ca.mcgill.mchacks2018.noq;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
@@ -13,76 +13,188 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.location.places.AutocompleteFilter;
-import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceDetectionClient;
-import com.google.android.gms.location.places.PlaceLikelihood;
-import com.google.android.gms.location.places.PlaceLikelihoodBufferResponse;
 import com.google.android.gms.location.places.Places;
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
-import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 
+import java.util.ArrayList;
+
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 import static com.google.android.gms.location.places.AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private static final float DEFAULT_ZOOM = 18;
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     private GoogleMap mMap;
-    private FusedLocationProviderClient mFusedLocationProviderClient;
-    private boolean mLocationPermissionGranted = true;
-    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    private static final String TAG = "MapsActivity";
-    private LatLng mDefaultLocation = new LatLng(0, 0);
-    private static final String KEY_CAMERA_POSITION = "camera_position";
+
     private PlaceDetectionClient mPlaceDetectionClient;
+
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+
+    private final LatLng mDefaultLocation = new LatLng(0, 0);
+    private static final float DEFAULT_ZOOM = 18;
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+    private boolean mLocationPermissionGranted;
+
     private Location mLastKnownLocation;
-    private static final int M_MAX_ENTRIES = 5;
-    private static final double M_MAX_RADIUS = 0.1;
-    private String[] mLikelyPlaceNames;
-    private String[] mLikelyPlaceAddresses;
-    private String[] mLikelyPlaceAttributions;
-    private LatLng[] mLikelyPlaceLatLngs;
+
+    private static final String KEY_CAMERA_POSITION = "camera_position";
+    private static final String KEY_LOCATION = "location";
+
+//    private static final int M_MAX_ENTRIES = 5;
+//    private String[] mLikelyPlaceNames;
+//    private String[] mLikelyPlaceAddresses;
+//    private String[] mLikelyPlaceAttributions;
+//    private LatLng[] mLikelyPlaceLatLngs;
+
+    private ArrayList<Marker> markers = new ArrayList<>();
+    private ArrayList<Place> places = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (savedInstanceState != null) {
-            CameraPosition mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
+            mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
         }
 
         setContentView(R.layout.activity_maps);
-        GeoDataClient mGeoDataClient = Places.getGeoDataClient(this, null);
-        mPlaceDetectionClient = Places.getPlaceDetectionClient(this, null);
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        mPlaceDetectionClient = Places.getPlaceDetectionClient(this, null);
+
+        mFusedLocationProviderClient = getFusedLocationProviderClient(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (mMap != null) {
+            outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
+            outState.putParcelable(KEY_LOCATION, mLastKnownLocation);
+            super.onSaveInstanceState(outState);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.current_place_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+//        if (item.getItemId() == R.id.option_get_place) {
+//            showCurrentPlace();
+//        }
+        if (item.getItemId() == R.id.option_clear_markers) {
+            clearMarkers();
+        } else if (item.getItemId() == R.id.option_search_place) {
+            createAutocompleteIntent();
+        } else if (item.getItemId() == R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap map) {
+        mMap = map;
+
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            @Override
+            // Return null here, so that getInfoContents() is called next.
+            public View getInfoWindow(Marker arg0) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                // Inflate the layouts for the info window, title and snippet.
+                View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
+
+                TextView title = ((TextView) infoWindow.findViewById(R.id.title));
+                title.setText(marker.getTitle());
+
+                TextView snippet = ((TextView) infoWindow.findViewById(R.id.snippet));
+                snippet.setText(marker.getSnippet());
+
+                return infoWindow;
+            }
+        });
+
+        getLocationPermission();
+        startLocationUpdates();
+        updateLocationUI();
+        getDeviceLocation();
+    }
+
+    public void getDeviceLocation() {
+    /*
+     * Get the best and most recent location of the device, which may be null in rare
+     * cases when a location is not available.
+     */
+        try {
+            if (mLocationPermissionGranted) {
+                mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (location != null) {
+                            // Set the map's camera position to the current location of the device.
+                            onLocationChanged(location);
+                            mLastKnownLocation = location;
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                    new LatLng(mLastKnownLocation.getLatitude(),
+                                            mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                        }
+                    }
+                })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.d("MapActivity", "Error getting location");
+                                e.printStackTrace();
+                            }
+                        });
+            }
+        } catch (SecurityException e) {
+            Log.e("Exception: %s", e.getMessage());
+        }
     }
 
 
@@ -95,7 +207,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-    private void getLocationPermission() {
+
+    public void getLocationPermission() {
     /*
      * Request location permission, so that we can get the location of the
      * device. The result of the permission request is handled by a callback,
@@ -123,85 +236,121 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
-                } else {
-                    return;
                 }
             }
         }
         updateLocationUI();
     }
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+//    public void showCurrentPlace() {
+//        if (mMap == null) {
+//            return;
+//        }
+//
+//        if (mLocationPermissionGranted) {
+//            // Get the likely places - that is, the businesses and other points of interest that
+//            // are the best match for the device's current location.
+//            ArrayList<String> restrictedPlaceIDs = new ArrayList<>();
+//            PlaceFilter filter = new PlaceFilter(true, restrictedPlaceIDs);
+//
+//            @SuppressWarnings("MissingPermission") final Task<PlaceLikelihoodBufferResponse> placeResult =
+//                    mPlaceDetectionClient.getCurrentPlace(filter);
+//            placeResult.addOnCompleteListener
+//                    (new OnCompleteListener<PlaceLikelihoodBufferResponse>() {
+//                        @Override
+//                        public void onComplete(@NonNull Task<PlaceLikelihoodBufferResponse> task) {
+//                            if (task.isSuccessful() && task.getResult() != null) {
+//                                PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+//
+//                                // Set the count, handling cases where less than 5 entries are returned.
+//                                int count;
+//                                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+//                                    count = likelyPlaces.getCount();
+//                                } else {
+//                                    count = M_MAX_ENTRIES;
+//                                }
+//
+//                                int i = 0;
+//                                mLikelyPlaceNames = new String[count];
+//                                mLikelyPlaceAddresses = new String[count];
+//                                mLikelyPlaceAttributions = new String[count];
+//                                mLikelyPlaceLatLngs = new LatLng[count];
+//
+//                                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+//                                    // Build a list of likely places to show the user.
+//                                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+//                                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+//                                            .getAddress();
+//                                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+//                                            .getAttributions();
+//                                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+//
+//                                    i++;
+//                                    if (i > (count - 1)) {
+//                                        break;
+//                                    }
+//                                }
+//
+//                                // Release the place likelihood buffer, to avoid memory leaks.
+//                                likelyPlaces.release();
+//
+//                                // Show a dialog offering the user the list of likely places, and add a
+//                                // marker at the selected place.
+//                                openPlacesDialog();
+//
+//                            } else {
+//                                Log.e(TAG, "Exception: %s", task.getException());
+//                            }
+//                        }
+//                    });
+//        } else {
+//            // The user has not granted permission.
+//            Log.i(TAG, "The user did not grant location permission.");
+//
+//            // Add a default marker, because the user hasn't selected a place.
+//            mMap.addMarker(new MarkerOptions()
+//                    .title(getString(R.string.default_info_title))
+//                    .position(mDefaultLocation)
+//                    .snippet(getString(R.string.default_info_snippet)));
+//
+//            // Prompt the user for permission.
+//            getLocationPermission();
+//        }
+//    }
+//
+//    public void openPlacesDialog() {
+//        // Ask the user to choose the place where they are now.
+//        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                // The "which" argument contains the position of the selected item.
+//                LatLng markerLatLng = mLikelyPlaceLatLngs[which];
+//                String markerSnippet = mLikelyPlaceAddresses[which];
+//                if (mLikelyPlaceAttributions[which] != null) {
+//                    markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
+//                }
+//
+//                // Add a marker for the selected place, with an info window
+//                // showing information about that place.
+//                mMap.addMarker(new MarkerOptions()
+//                        .title(mLikelyPlaceNames[which])
+//                        .position(markerLatLng)
+//                        .snippet(markerSnippet));
+//
+//                // Position the map's camera at the location of the marker.
+//                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
+//                        DEFAULT_ZOOM));
+//            }
+//        };
+//
+//    // Display the dialog.
+//    AlertDialog dialog = new AlertDialog.Builder(this)
+//            .setTitle(R.string.pick_place)
+//            .setItems(mLikelyPlaceNames, listener)
+//            .show();
+//}
 
-        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-
-            @Override
-            // Return null here, so that getInfoContents() is called next.
-            public View getInfoWindow(Marker arg0) {
-                return null;
-            }
-
-            @Override
-            public View getInfoContents(Marker marker) {
-                // Inflate the layouts for the info window, title and snippet.
-                View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
-
-                TextView title = ((TextView) infoWindow.findViewById(R.id.title));
-                title.setText(marker.getTitle());
-
-                TextView snippet = ((TextView) infoWindow.findViewById(R.id.snippet));
-                snippet.setText(marker.getSnippet());
-
-                return infoWindow;
-            }
-        });
-
-        getLocationPermission();
-        updateLocationUI();
-        getDeviceLocation();
-//        System.out.println("Current location: " + mLastKnownLocation.toString());
-        createAutocompleteFragment();
-    }
-
-    private void createAutocompleteFragment() {
-        getDeviceLocation();
-        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
-                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
-
-        if (mLastKnownLocation != null) {
-            LatLng northEast = new LatLng(mLastKnownLocation.getLatitude() + M_MAX_RADIUS, mLastKnownLocation.getLongitude() + M_MAX_RADIUS);
-            LatLng southWest = new LatLng(mLastKnownLocation.getLatitude() - M_MAX_RADIUS, mLastKnownLocation.getLongitude() - M_MAX_RADIUS);
-            LatLngBounds autocompleteBounds = LatLngBounds.builder().include(northEast).include(southWest).build();
-            autocompleteFragment.setBoundsBias(autocompleteBounds);
-            System.out.println("~~~~~~~~~~~~NOT NULL~~~~~~~~~~~");
-        }
-
-        AutocompleteFilter typeFilter = new AutocompleteFilter.Builder()
-                .setCountry("CA")
-                .setTypeFilter(TYPE_FILTER_ESTABLISHMENT)
-                .build();
-
-        autocompleteFragment.setFilter(typeFilter);
-
-        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
-            @Override
-            public void onPlaceSelected(Place place) {
-                // TODO: Get info about the selected place.
-                LatLng placeLatLng = place.getLatLng();
-                mMap.addMarker(new MarkerOptions().title(place.getName().toString()).position(placeLatLng));
-            }
-
-            @Override
-            public void onError(Status status) {
-                // TODO: Handle the error.
-                Log.i(TAG, "An error occurred: " + status);
-            }
-        });
-    }
-
-    private void updateLocationUI() {
+    public void updateLocationUI() {
         if (mMap == null) {
             return;
         }
@@ -220,174 +369,152 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void getDeviceLocation() {
-    /*
-     * Get the best and most recent location of the device, which may be null in rare
-     * cases when a location is not available.
-     */
+    public void createAutocompleteIntent() {
+
+        AutocompleteFilter typeFilter = new AutocompleteFilter.Builder()
+                .setCountry("CA")
+                .setTypeFilter(TYPE_FILTER_ESTABLISHMENT)
+                .build();
+
+        LatLng center = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+        double radiusDegrees = 0.1;
+        LatLng northEast = new LatLng(center.latitude + radiusDegrees, center.longitude + radiusDegrees);
+        LatLng southWest = new LatLng(center.latitude - radiusDegrees, center.longitude - radiusDegrees);
+        LatLngBounds bounds = LatLngBounds.builder()
+                .include(northEast)
+                .include(southWest)
+                .build();
+
         try {
-            if (mLocationPermissionGranted) {
-                mFusedLocationProviderClient.getLastLocation()
-                        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                            @Override
-                            public void onSuccess(Location location) {
-                                // Got last known location. In some rare situations this can be null.
-                                if (location != null) {
-                                    // Logic to handle location object
-                                    mLastKnownLocation = location;
-                                    System.out.println(mLastKnownLocation.toString());
-                                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                            new LatLng(mLastKnownLocation.getLatitude(),
-                                                    mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-                                } else {
-                                    System.out.println("Current location is null. Using defaults.");
-                                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                                }
-
-                            }
-                        });
-            }
-        } catch (SecurityException e) {
-            Log.e("Exception: %s", e.getMessage());
+            Intent intent = new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY).setFilter(typeFilter).setBoundsBias(bounds).build(this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+        } catch (GooglePlayServicesNotAvailableException e) {
+            e.printStackTrace();
+        } catch (GooglePlayServicesRepairableException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.current_place_menu, menu);
-        return true;
-    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                final Place place = PlaceAutocomplete.getPlace(this, data);
+                LatLng placeLatLng = place.getLatLng();
+                places.add(place);
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.option_get_place) {
-            showCurrentPlace();
-        } else if (item.getItemId() == R.id.option_clear_markers) {
-            clearMarkers();
-        } else if (item.getItemId() == R.id.home) {
-            NavUtils.navigateUpFromSameTask(this);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+                final Marker placeMarker = mMap.addMarker(new MarkerOptions().title(place.getName().toString()).position(placeLatLng).snippet(place.getId()));
+                markers.add(placeMarker);
 
-    private void clearMarkers() {
-        mMap.clear();
-    }
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, DEFAULT_ZOOM));
+                final PopupMenu popupMenu = new PopupMenu(this, findViewById(R.id.option_search_place));
+                popupMenu.getMenuInflater().inflate(R.menu.place_context_menu, popupMenu.getMenu());
 
-    private void showCurrentPlace() {
-        if (mMap == null) {
-            return;
-        }
-
-        if (mLocationPermissionGranted) {
-            // Get the likely places - that is, the businesses and other points of interest that
-            // are the best match for the device's current location.
-            @SuppressWarnings("MissingPermission") final Task<PlaceLikelihoodBufferResponse> placeResult =
-                    mPlaceDetectionClient.getCurrentPlace(null);
-            placeResult.addOnCompleteListener
-                    (new OnCompleteListener<PlaceLikelihoodBufferResponse>() {
-                        @Override
-                        public void onComplete(@NonNull Task<PlaceLikelihoodBufferResponse> task) {
-                            if (task.isSuccessful() && task.getResult() != null) {
-                                PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
-
-                                // Set the count, handling cases where less than 5 entries are returned.
-                                int count;
-                                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
-                                    count = likelyPlaces.getCount();
-                                } else {
-                                    count = M_MAX_ENTRIES;
-                                }
-
-                                int i = 0;
-                                mLikelyPlaceNames = new String[count];
-                                mLikelyPlaceAddresses = new String[count];
-                                mLikelyPlaceAttributions = new String[count];
-                                mLikelyPlaceLatLngs = new LatLng[count];
-
-                                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                                    // Build a list of likely places to show the user.
-                                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
-                                            .getAddress();
-                                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
-                                            .getAttributions();
-                                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
-
-                                    i++;
-                                    if (i > (count - 1)) {
-                                        break;
+                mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        if (marker.equals(placeMarker)) {
+                            popupMenu.getMenu().findItem(R.id.place_name).setTitle(place.getName());
+                            popupMenu.getMenu().findItem(R.id.place_address).setTitle(place.getAddress());
+//                            popupMenu.getMenu().findItem(R.id.place_wait).setTitle();
+                            popupMenu.show();
+                            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                @Override
+                                public boolean onMenuItemClick(MenuItem item) {
+                                    if (item.getItemId() == R.id.option_checkin) {
+                                        checkIn(place);
+                                    } else if (item.getItemId() == R.id.option_checkout) {
+                                        checkOut(place);
+                                    } else if (item.getItemId() == R.id.option_add_favorites) {
+                                        addToFavorites(place);
+                                    } else {
+                                        return false;
                                     }
+                                    return true;
                                 }
-
-                                // Release the place likelihood buffer, to avoid memory leaks.
-                                likelyPlaces.release();
-
-                                // Show a dialog offering the user the list of likely places, and add a
-                                // marker at the selected place.
-                                openPlacesDialog();
-
-                            } else {
-                                Log.e(TAG, "Exception: %s", task.getException());
+                            });
+                            return true;
+                        } else {
+                            int i = 0;
+                            for (Marker existingMarker : markers) {
+                                if (marker.equals(existingMarker)) {
+                                    final Place existingPlace = places.get(i);
+                                    popupMenu.getMenu().findItem(R.id.place_name).setTitle(existingPlace.getName());
+                                    popupMenu.getMenu().findItem(R.id.place_address).setTitle(existingPlace.getAddress());
+//                                    popupMenu.getMenu().findItem(R.id.place_wait).setTitle();
+                                    popupMenu.show();
+                                    popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                        @Override
+                                        public boolean onMenuItemClick(MenuItem item) {
+                                            if (item.getItemId() == R.id.option_checkin) {
+                                                checkIn(existingPlace);
+                                            } else if (item.getItemId() == R.id.option_checkout) {
+                                                checkOut(existingPlace);
+                                            } else if (item.getItemId() == R.id.option_add_favorites) {
+                                                addToFavorites(existingPlace);
+                                            } else {
+                                                return false;
+                                            }
+                                            return true;
+                                        }
+                                    });
+                                    return true;
+                                }
+                                i++;
                             }
+                            return false;
                         }
-                    });
-        } else {
-            // The user has not granted permission.
-            Log.i(TAG, "The user did not grant location permission.");
+                    }
+                });
 
-            // Add a default marker, because the user hasn't selected a place.
-            mMap.addMarker(new MarkerOptions()
-                    .title(getString(R.string.default_info_title))
-                    .position(mDefaultLocation)
-                    .snippet(getString(R.string.default_info_snippet)));
-
-            // Prompt the user for permission.
-            getLocationPermission();
-        }
-    }
-
-    private void openPlacesDialog() {
-        // Ask the user to choose the place where they are now.
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // The "which" argument contains the position of the selected item.
-                LatLng markerLatLng = mLikelyPlaceLatLngs[which];
-                String markerSnippet = mLikelyPlaceAddresses[which];
-                if (mLikelyPlaceAttributions[which] != null) {
-                    markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
-                }
-
-                // Add a marker for the selected place, with an info window
-                // showing information about that place.
-                mMap.addMarker(new MarkerOptions()
-                        .title(mLikelyPlaceNames[which])
-                        .position(markerLatLng)
-                        .snippet(markerSnippet));
-
-                // Position the map's camera at the location of the marker.
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
-                        DEFAULT_ZOOM));
             }
-        };
-
-        // Display the dialog.
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.pick_place)
-                .setItems(mLikelyPlaceNames, listener)
-                .show();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        if (mMap != null) {
-            outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
-            super.onSaveInstanceState(outState);
         }
     }
 
+    public void clearMarkers() {
+        mMap.clear();
+        markers.clear();
+        places.clear();
+    }
 
+    @SuppressLint("MissingPermission")
+    protected void startLocationUpdates() {
+
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        long UPDATE_INTERVAL = 10 * 1000;
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        long FASTEST_INTERVAL = 2000;
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationRequest);
+        LocationSettingsRequest locationSettingsRequest = builder.build();
+
+        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+        settingsClient.checkLocationSettings(locationSettingsRequest);
+
+        getFusedLocationProviderClient(this).requestLocationUpdates(mLocationRequest, new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                onLocationChanged(locationResult.getLastLocation());
+            }
+        }, Looper.myLooper());
+    }
+
+    public void onLocationChanged(Location location) {
+        mLastKnownLocation = location;
+    }
+
+    public void checkIn(Place place) {
+
+    }
+
+    public void checkOut(Place place) {
+
+    }
+
+    public void addToFavorites(Place place) {
+        
+    }
 }

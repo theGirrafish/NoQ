@@ -5,6 +5,7 @@
     <color name="colorAccent">#a2b5b9</color>
     <color name="Background">#91cacf</color>
     <color name="button">#7fa2a9</color>
+    <color name="ActivityBG">#b1eccfb3</color>
 
 
 </resources>
