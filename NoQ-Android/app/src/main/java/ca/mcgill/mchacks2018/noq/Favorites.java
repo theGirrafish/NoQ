@@ -1,5 +1,6 @@
 package ca.mcgill.mchacks2018.noq;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -16,15 +17,15 @@ public class Favorites extends AppCompatActivity {
         setContentView(R.layout.activity_favorites);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+    }
 
-        //FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        Button button_addfav = (Button) findViewById(R.id.button_addfav);
-        button_addfav.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+    public void switchToDataInput(View view) {
+        Intent dataIntent = new Intent(this, DataInput.class);
+        startActivity(dataIntent);
+    }
+
+    public void switchToMap(View view) {
+        Intent mapsIntent = new Intent(this, MapsActivity.class);
+        startActivity(mapsIntent);
     }
 }

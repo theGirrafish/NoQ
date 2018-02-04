@@ -99,9 +99,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mProgressView = findViewById(R.id.login_progress);
     }
 
-    public void switchToMapLogin() {
-        Intent mapsIntent = new Intent(this, MapsActivity.class);
-        startActivity(mapsIntent);
+    public void switchToFavoritesLogin() {
+        Intent favoritesIntent = new Intent(this, Favorites.class);
+        startActivity(favoritesIntent);
     }
 
     public void switchToRegister(View view) {
@@ -376,7 +376,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
 
             if (success) {
-                switchToMapLogin();
+                switchToFavoritesLogin();
             } else if (noAccount) {
                 mEmailView.setError(getString(R.string.error_no_account));
                 mEmailView.requestFocus();

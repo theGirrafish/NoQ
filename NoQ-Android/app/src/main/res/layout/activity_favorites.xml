@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/ActivityBG"
     android:fitsSystemWindows="true"
     tools:context="ca.mcgill.mchacks2018.noq.Favorites">
 
@@ -37,12 +38,13 @@
 
 
     <Button
-        android:id="@+id/button_addfav"
+        android:id="@+id/button_information"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="fav"
-        android:onClick="sendMessage"
-        android:background="@drawable/roundedbutton"
+        android:text="+"
+        android:textSize="25dp"
+        android:onClick="switchToDataInput"
+        android:background="@drawable/button_bg_rounded_corners"
         android:layout_alignParentLeft="true"
         android:layout_gravity="bottom|left"
         android:layout_marginLeft="30dp"
@@ -53,8 +55,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Maps"
-        android:onClick="sendMessage"
-        android:background="@drawable/roundedbutton"
+        android:onClick="switchToMap"
+        android:background="@drawable/button_bg_rounded_corners"
         android:layout_alignParentRight="true"
         android:layout_gravity="bottom|right"
         android:layout_marginRight="30dp"/>
