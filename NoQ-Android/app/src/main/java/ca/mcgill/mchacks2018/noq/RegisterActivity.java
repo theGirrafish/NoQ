@@ -346,7 +346,6 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
             HttpUtils.get("/users/", new RequestParams(), new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
@@ -383,7 +382,6 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
                 }
             }
 
-            // TODO: register the new account here.
             HttpUtils.post(String.format("/users/%s?password=%s&age=%s", mUsername, mPassword, mAge), new RequestParams(), new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONArray response) {

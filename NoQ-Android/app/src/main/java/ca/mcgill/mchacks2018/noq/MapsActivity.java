@@ -1,8 +1,6 @@
 package ca.mcgill.mchacks2018.noq;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -32,9 +30,6 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.location.places.AutocompleteFilter;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceDetectionClient;
-import com.google.android.gms.location.places.PlaceFilter;
-import com.google.android.gms.location.places.PlaceLikelihood;
-import com.google.android.gms.location.places.PlaceLikelihoodBufferResponse;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -46,10 +41,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 
@@ -75,13 +68,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
 
-    private static final int M_MAX_ENTRIES = 5;
-    private String[] mLikelyPlaceNames;
-    private String[] mLikelyPlaceAddresses;
-    private String[] mLikelyPlaceAttributions;
-    private LatLng[] mLikelyPlaceLatLngs;
+//    private static final int M_MAX_ENTRIES = 5;
+//    private String[] mLikelyPlaceNames;
+//    private String[] mLikelyPlaceAddresses;
+//    private String[] mLikelyPlaceAttributions;
+//    private LatLng[] mLikelyPlaceLatLngs;
 
-    private double radiusDegrees = 0.1;
     private ArrayList<Marker> markers = new ArrayList<>();
     private ArrayList<Place> places = new ArrayList<>();
 
@@ -385,6 +377,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .build();
 
         LatLng center = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+        double radiusDegrees = 0.1;
         LatLng northEast = new LatLng(center.latitude + radiusDegrees, center.longitude + radiusDegrees);
         LatLng southWest = new LatLng(center.latitude - radiusDegrees, center.longitude - radiusDegrees);
         LatLngBounds bounds = LatLngBounds.builder()
@@ -425,16 +418,46 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             popupMenu.getMenu().findItem(R.id.place_address).setTitle(place.getAddress());
 //                            popupMenu.getMenu().findItem(R.id.place_wait).setTitle();
                             popupMenu.show();
+                            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                @Override
+                                public boolean onMenuItemClick(MenuItem item) {
+                                    if (item.getItemId() == R.id.option_checkin) {
+                                        checkIn(place);
+                                    } else if (item.getItemId() == R.id.option_checkout) {
+                                        checkOut(place);
+                                    } else if (item.getItemId() == R.id.option_add_favorites) {
+                                        addToFavorites(place);
+                                    } else {
+                                        return false;
+                                    }
+                                    return true;
+                                }
+                            });
                             return true;
                         } else {
                             int i = 0;
                             for (Marker existingMarker : markers) {
                                 if (marker.equals(existingMarker)) {
-                                    Place existingPlace = places.get(i);
+                                    final Place existingPlace = places.get(i);
                                     popupMenu.getMenu().findItem(R.id.place_name).setTitle(existingPlace.getName());
                                     popupMenu.getMenu().findItem(R.id.place_address).setTitle(existingPlace.getAddress());
 //                                    popupMenu.getMenu().findItem(R.id.place_wait).setTitle();
                                     popupMenu.show();
+                                    popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                        @Override
+                                        public boolean onMenuItemClick(MenuItem item) {
+                                            if (item.getItemId() == R.id.option_checkin) {
+                                                checkIn(existingPlace);
+                                            } else if (item.getItemId() == R.id.option_checkout) {
+                                                checkOut(existingPlace);
+                                            } else if (item.getItemId() == R.id.option_add_favorites) {
+                                                addToFavorites(existingPlace);
+                                            } else {
+                                                return false;
+                                            }
+                                            return true;
+                                        }
+                                    });
                                     return true;
                                 }
                                 i++;
@@ -481,5 +504,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void onLocationChanged(Location location) {
         mLastKnownLocation = location;
+    }
+
+    public void checkIn(Place place) {
+
+    }
+
+    public void checkOut(Place place) {
+
+    }
+
+    public void addToFavorites(Place place) {
+        
     }
 }
