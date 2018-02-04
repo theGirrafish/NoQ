@@ -13,9 +13,11 @@ import ca.mcgill.mchacks2018.noq.persistence.PersistenceXStream;
 @Service
 public class NoQService {
 	private RegistrationManager rm;
+	private PersistenceXStream persX;
 
 	public NoQService(RegistrationManager rm) {
 		this.rm = rm;
+		this.persX = new PersistenceXStream();
 	}
 
 	public List<User> findAllUsers() {
@@ -46,7 +48,7 @@ public class NoQService {
 		}
 
 		rm.addUser(u);
-		PersistenceXStream.sql.insertUser(u.getId(), u.getUsername(), u.getPassword(), u.getAge(), u.getPoints(), u.getFavs().toString());
+		persX.sql.insertUser(u.getId(), u.getUsername(), u.getPassword(), u.getAge(), u.getPoints(), u.getFavs().toString());
 		return u;
 	}
 
@@ -74,7 +76,7 @@ public class NoQService {
 		}
 
 		rm.addLocation(l);
-		PersistenceXStream.sql.insertLocation(l.getId(), l.getName(), l.getStrtNum(), l.getAddress(), l.getQTime(), l.getCheckTimes().toString());
+		persX.sql.insertLocation(l.getId(), l.getName(), l.getStrtNum(), l.getAddress(), l.getQTime(), l.getCheckTimes().toString());
 		return l;
 	}
 

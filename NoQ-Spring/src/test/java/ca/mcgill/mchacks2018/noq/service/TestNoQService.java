@@ -15,9 +15,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ca.mcgill.mchacks2018.noq.model.Event;
-import ca.mcgill.mchacks2018.noq.model.RegistrationManager;
 import ca.mcgill.mchacks2018.noq.model.User;
+import ca.mcgill.mchacks2018.noq.model.RegistrationManager;
 import ca.mcgill.mchacks2018.noq.persistence.PersistenceXStream;
 import ca.mcgill.mchacks2018.noq.service.InvalidInputException;
 import ca.mcgill.mchacks2018.noq.service.NoQService;
