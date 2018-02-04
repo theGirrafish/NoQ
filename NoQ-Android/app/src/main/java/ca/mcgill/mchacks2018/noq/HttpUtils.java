@@ -8,7 +8,7 @@ public class HttpUtils {
 
 //    public static final String DEFAULT_BASE_URL = "http://192.168.56.50:8088/";
     // Change this when server restarted
-    public static final String DEFAULT_BASE_URL = "http://adddaedf.ngrok.io/";
+    public static final String DEFAULT_BASE_URL = "http://4442ea2a.ngrok.io/";
 
     private static String baseUrl;
     private static SyncHttpClient client = new SyncHttpClient();
@@ -30,6 +30,10 @@ public class HttpUtils {
     }
 
     public static void post(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
+        client.post(getAbsoluteUrl(url), params, responseHandler);
+    }
+
+    public static void patch(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
         client.post(getAbsoluteUrl(url), params, responseHandler);
     }
 

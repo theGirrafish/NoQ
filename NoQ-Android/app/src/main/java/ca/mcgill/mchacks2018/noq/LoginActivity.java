@@ -63,6 +63,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    public static String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -357,6 +358,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     try {
                         if (user.getString("username").equals(mUsername)) {
                             // Account exists, return true if the password matches.
+                            username = user.getString("username");
                             return user.getString("password").equals(mPassword);
                         }
                     } catch (JSONException e) {
