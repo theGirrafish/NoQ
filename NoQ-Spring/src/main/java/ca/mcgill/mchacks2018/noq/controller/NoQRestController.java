@@ -36,8 +36,8 @@ public class NoQRestController {
 	}
 
 	// Conversion methods (not part of the API)
-	private LocationDto convertToDto(Location e) {
-		return modelMapper.map(e, LocationDto.class);
+	private LocationDto convertToDto(Location l) {
+		return modelMapper.map(l, LocationDto.class);
 	}
 
 	private UserDto convertToDto(User user) {

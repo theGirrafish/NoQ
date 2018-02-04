@@ -1,23 +1,23 @@
 package ca.mcgill.mchacks2018.noq.dto;
 
-import org.json.JSONObject;
-
 public class UserDto {
 
+	private int id;
 	private String username;
 	private String password;
 	private int age;
 	private int points;
-	private JSONObject favs;
+	private String favs;
 
 	public UserDto() {
 	}
 
-	public UserDto(String username, String password, int age) {
-		this(username, password, age, 0, emptyJSON());
+	public UserDto(int id, String username, String password, int age) {
+		this(id, username, password, age, 0, "{}");
 	}
 
-	public UserDto(String username, String password, int age, int points, JSONObject favs) {
+	public UserDto(int id, String username, String password, int age, int points, String favs) {
+		this.id = id;
 		this.username = username;
 		this.password = password;
 		this.age = age;
@@ -25,13 +25,8 @@ public class UserDto {
 		this.favs = favs;
 	}
 
-	public static JSONObject emptyJSON() {
-		try {
-			return new JSONObject("{}");
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-		}
-		return null;
+	public int getId() {
+		return id;
 	}
 
 	public String getUsername() {
@@ -50,7 +45,7 @@ public class UserDto {
 		return points;
 	}
 
-	public JSONObject getFavs() {
+	public String getFavs() {
 		return favs;
 	}
 
@@ -66,7 +61,7 @@ public class UserDto {
 		this.points = points;
 	}
 
-	public void setFavs(JSONObject favs) {
+	public void setFavs(String favs) {
 		this.favs = favs;
 	}
 }

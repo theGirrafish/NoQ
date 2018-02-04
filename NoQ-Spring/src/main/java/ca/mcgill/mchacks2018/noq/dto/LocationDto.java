@@ -1,7 +1,5 @@
 package ca.mcgill.mchacks2018.noq.dto;
 
-import org.json.JSONObject;
-
 public class LocationDto {
 
     private String id;
@@ -9,31 +7,22 @@ public class LocationDto {
     private String strtNum;
     private String address;
     private int qTime;
-    private JSONObject checkTimes;
+    private String checkTimes;
 
     public LocationDto() {
     }
 
     public LocationDto(String id, String name, String strtNum, String address) {
-        this(id, name, strtNum, address, -1, emptyJSON());
+        this(id, name, strtNum, address, -1, "{}");
     }
 
-    public LocationDto(String id, String name, String strtNum, String address, int qTime, JSONObject checkTimes) {
+    public LocationDto(String id, String name, String strtNum, String address, int qTime, String checkTimes) {
         this.id = id;
         this.name = name;
         this.strtNum = strtNum;
         this.address = address;
         this.qTime = qTime;
         this.checkTimes = checkTimes;
-    }
-
-    public static JSONObject emptyJSON() {
-        try {
-            return new JSONObject("{}");
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-        }
-        return null;
     }
 
     public String getId() {
@@ -56,7 +45,7 @@ public class LocationDto {
 		return qTime;
 	}
 
-	public JSONObject getCheckTimes() {
+	public String getCheckTimes() {
 		return checkTimes;
 	}
 
@@ -80,7 +69,7 @@ public class LocationDto {
 		this.qTime = qTime;
 	}
 
-	public void setCheckTimes(JSONObject checkTimes) {
+	public void setCheckTimes(String checkTimes) {
 		this.checkTimes = checkTimes;
 	}
 }
