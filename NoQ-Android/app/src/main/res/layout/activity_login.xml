@@ -99,9 +99,9 @@
                 android:id="@+id/email_sign_in_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="10dp"
                 android:text="@string/action_sign_in"
-                android:layout_marginBottom="30dp"
+                android:layout_marginBottom="10dp"
                 android:textStyle="bold"
                 android:alpha="0.60"
                 android:background="@drawable/button_bg_rounded_corners"/>
@@ -111,6 +111,7 @@
                 android:id="@+id/action_sign_up"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:alpha="0.60"
                 android:background="@drawable/button_bg_rounded_corners"
                 android:onClick="switchToRegister"
                 android:text="@string/action_sign_up" />
@@ -118,14 +119,13 @@
             <Button
                 android:id="@+id/MapDebug"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:onClick="switchToMap"
-                android:layout_margin="10dp"
-                android:textStyle="bold"
-                android:text="@string/maps_button"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:alpha="0.60"
-                android:background="@drawable/button_bg_rounded_corners"/>
+                android:background="@drawable/button_bg_rounded_corners"
+                android:onClick="switchToMap"
+                android:text="@string/maps_button"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
