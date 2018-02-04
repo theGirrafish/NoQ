@@ -6,7 +6,7 @@
     android:orientation="vertical">
     <item
         android:id="@+id/place_name"
-        android:title="@string/place_name"/>
+        android:title="@string/place_name" />
     <item
         android:id="@+id/place_address"
         android:title="@string/place_address"/>
