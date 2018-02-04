@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
@@ -44,6 +45,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
@@ -112,6 +114,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        //Ignore running outside AsyncTask
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
     }
 
     @Override
@@ -530,7 +536,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 @Override
                 public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-                    HttpUtils.patch(String.format("/locations/%s?name=%s&strtNum=%s&address=%s", place.getId(), place.getName().toString().replaceAll(" ", "%20"), "1", place.getAddress().toString().replaceAll(" ", "%20")), new RequestParams(), new JsonHttpResponseHandler() {
+                    String placeName = replace(place.getName().toString());
+                    String placeAddress = replace(place.getAddress().toString());
+                    HttpUtils.post(String.format("/locations/%s?name=%s&strtNum=%s&address=%s", place.getId(), placeName, "1", placeAddress), new RequestParams(), new JsonHttpResponseHandler() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
@@ -546,7 +554,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             checkInTime = Calendar.getInstance().getTimeInMillis() / 1000;
             String checkInTimeString = Long.toString(checkInTime);
-            HttpUtils.patch(String.format("/locations/%s/?username=%s&checkIn=%s,", place.getId(), getUsername(), checkInTimeString), new RequestParams(), new JsonHttpResponseHandler());
+            HttpUtils.patch(String.format("/locations/checkIn/%s/?username=%s&checkIn=%s/", place.getId(), getUsername(), checkInTimeString), new RequestParams(), new JsonHttpResponseHandler());
             checkedIn = true;
             checkedOut = false;
 
@@ -562,7 +570,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             String checkOutTimeString = Long.toString(checkInTime);
             checkedIn = false;
             checkedOut = true;
-            HttpUtils.patch(String.format("/locations/%s/?username=%s&checkOut=%s,", place.getId(), getUsername(), checkOutTimeString), new RequestParams(), new JsonHttpResponseHandler());
+            HttpUtils.patch(String.format("/locations/checkOut/%s/?username=%s&checkOut=%s/", place.getId(), getUsername(), checkOutTimeString), new RequestParams(), new JsonHttpResponseHandler());
         }
         else {
             Toast toast = Toast.makeText(getApplicationContext(), "Already checked out!", Toast.LENGTH_SHORT);
@@ -590,7 +598,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-                HttpUtils.patch(String.format("/locations/%s?name=%s&strtNum=%s&address=%s", place.getId(), place.getName().toString().replaceAll(" ", "%20"), "1", place.getAddress().toString().replaceAll(" ", "%20")), new RequestParams(), new JsonHttpResponseHandler() {
+                String placeName = replace(place.getName().toString());
+                String placeAddress = replace(place.getAddress().toString());
+                placeAddress = placeAddress.replaceAll(",", "%2C");
+                System.out.println("Place Name: " + placeName);
+                System.out.println("Place Address: " + placeAddress);
+                HttpUtils.post(String.format("/locations/%s/?name=%s&strtNum=%s&address=%s", place.getId(), placeName, "1", placeAddress), new RequestParams(), new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
@@ -608,8 +621,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public String getUsername() {
         if (RegisterActivity.username != null) {
             return RegisterActivity.username;
-        } else {
+        } else if (LoginActivity.username != null) {
             return LoginActivity.username;
+        } else {
+            System.out.println("USER NULL");
+            return "testUser";
         }
+
+    }
+
+    public String replace(String str) {
+        String[] words = str.split(" ");
+        StringBuilder sentence = new StringBuilder(words[0]);
+
+        for (int i = 1; i < words.length; ++i) {
+            sentence.append("%20");
+            sentence.append(words[i]);
+        }
+
+        return sentence.toString();
     }
 }

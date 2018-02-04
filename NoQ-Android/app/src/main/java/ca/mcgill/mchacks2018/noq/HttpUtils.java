@@ -6,9 +6,9 @@ import com.loopj.android.http.SyncHttpClient;
 
 public class HttpUtils {
 
-//    public static final String DEFAULT_BASE_URL = "http://192.168.56.50:8088/";
+//    public static final String DEFAULT_BASE_URL = "http://192.168.56.50:8088";
     // Change this when server restarted
-    public static final String DEFAULT_BASE_URL = "http://4442ea2a.ngrok.io/";
+    public static final String DEFAULT_BASE_URL = "http://4442ea2a.ngrok.io";
 
     private static String baseUrl;
     private static SyncHttpClient client = new SyncHttpClient();
