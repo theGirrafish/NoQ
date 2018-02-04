@@ -7,6 +7,7 @@ class User
   password;
   Integer age;
   Integer points;
+  JSONObject favs;
 }
 
 class Location
@@ -19,16 +20,25 @@ class Location
   JSONObject checkTimes;
 }
 
-class Registration
+class RegistrationManager
 {
-  autounique id;
-  * -> 1 User user;
-  * -> 1 Location event;
+  1 -> * User users;
+  1 -> * Location locations;
+}//$?[End_of_model]$?
+
+class User
+{
+  position 91 168 136 135;
+}
+
+class Location
+{
+  position 254 170 182 135;
 }
 
 class RegistrationManager
 {
-  1 -> * Registration registrations;
-  1 -> * User users;
-  1 -> * Location locations;
+  position 179 20 142 45;
+  position.association Location:locations__RegistrationManager 110,45 89,0;
+  position.association RegistrationManager__User:users 30,45 63,0;
 }

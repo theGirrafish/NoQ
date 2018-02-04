@@ -2,10 +2,12 @@
 /*This code was generated using the UMPLE 1.26.1-f40f105-3613 modeling language!*/
 
 package ca.mcgill.mchacks2018.noq.model;
-import java.util.*;
 
-// line 27 "../../../../../EventRegistration.ump"
-// line 51 "../../../../../EventRegistration.ump"
+import java.util.*;
+import ca.mcgill.mchacks2018.noq.sqlite.SQLiteJDBC;
+
+// line 23 "../../../../../NoQ.ump"
+// line 39 "../../../../../NoQ.ump"
 public class RegistrationManager
 {
 
@@ -14,9 +16,9 @@ public class RegistrationManager
   //------------------------
 
   //RegistrationManager Associations
-  private List<Registration> registrations;
   private List<User> users;
-  private List<Event> events;
+  private List<Location> locations;
+  private SQLiteJDBC sql = new SQLiteJDBC();;
 
   //------------------------
   // CONSTRUCTOR
@@ -24,44 +26,14 @@ public class RegistrationManager
 
   public RegistrationManager()
   {
-    registrations = new ArrayList<Registration>();
     users = new ArrayList<User>();
-    events = new ArrayList<Event>();
+    locations = new ArrayList<Location>();
+    sql.connect();
   }
 
   //------------------------
   // INTERFACE
   //------------------------
-
-  public Registration getRegistration(int index)
-  {
-    Registration aRegistration = registrations.get(index);
-    return aRegistration;
-  }
-
-  public List<Registration> getRegistrations()
-  {
-    List<Registration> newRegistrations = Collections.unmodifiableList(registrations);
-    return newRegistrations;
-  }
-
-  public int numberOfRegistrations()
-  {
-    int number = registrations.size();
-    return number;
-  }
-
-  public boolean hasRegistrations()
-  {
-    boolean has = registrations.size() > 0;
-    return has;
-  }
-
-  public int indexOfRegistration(Registration aRegistration)
-  {
-    int index = registrations.indexOf(aRegistration);
-    return index;
-  }
 
   public User getUser(int index)
   {
@@ -93,91 +65,34 @@ public class RegistrationManager
     return index;
   }
 
-  public Event getEvent(int index)
+  public Location getLocation(int index)
   {
-    Event aEvent = events.get(index);
-    return aEvent;
+    Location aLocation = locations.get(index);
+    return aLocation;
   }
 
-  public List<Event> getEvents()
+  public List<Location> getLocations()
   {
-    List<Event> newEvents = Collections.unmodifiableList(events);
-    return newEvents;
+    List<Location> newLocations = Collections.unmodifiableList(locations);
+    return newLocations;
   }
 
-  public int numberOfEvents()
+  public int numberOfLocations()
   {
-    int number = events.size();
+    int number = locations.size();
     return number;
   }
 
-  public boolean hasEvents()
+  public boolean hasLocations()
   {
-    boolean has = events.size() > 0;
+    boolean has = locations.size() > 0;
     return has;
   }
 
-  public int indexOfEvent(Event aEvent)
+  public int indexOfLocation(Location aLocation)
   {
-    int index = events.indexOf(aEvent);
+    int index = locations.indexOf(aLocation);
     return index;
-  }
-
-  public static int minimumNumberOfRegistrations()
-  {
-    return 0;
-  }
-
-  public boolean addRegistration(Registration aRegistration)
-  {
-    boolean wasAdded = false;
-    if (registrations.contains(aRegistration)) { return false; }
-    registrations.add(aRegistration);
-    wasAdded = true;
-    return wasAdded;
-  }
-
-  public boolean removeRegistration(Registration aRegistration)
-  {
-    boolean wasRemoved = false;
-    if (registrations.contains(aRegistration))
-    {
-      registrations.remove(aRegistration);
-      wasRemoved = true;
-    }
-    return wasRemoved;
-  }
-
-  public boolean addRegistrationAt(Registration aRegistration, int index)
-  {
-    boolean wasAdded = false;
-    if(addRegistration(aRegistration))
-    {
-      if(index < 0 ) { index = 0; }
-      if(index > numberOfRegistrations()) { index = numberOfRegistrations() - 1; }
-      registrations.remove(aRegistration);
-      registrations.add(index, aRegistration);
-      wasAdded = true;
-    }
-    return wasAdded;
-  }
-
-  public boolean addOrMoveRegistrationAt(Registration aRegistration, int index)
-  {
-    boolean wasAdded = false;
-    if(registrations.contains(aRegistration))
-    {
-      if(index < 0 ) { index = 0; }
-      if(index > numberOfRegistrations()) { index = numberOfRegistrations() - 1; }
-      registrations.remove(aRegistration);
-      registrations.add(index, aRegistration);
-      wasAdded = true;
-    }
-    else
-    {
-      wasAdded = addRegistrationAt(aRegistration, index);
-    }
-    return wasAdded;
   }
 
   public static int minimumNumberOfUsers()
@@ -190,6 +105,7 @@ public class RegistrationManager
     boolean wasAdded = false;
     if (users.contains(aUser)) { return false; }
     users.add(aUser);
+    sql.insertUser(aUser.getId(), aUser.getUsername(), aUser.getPassword(), aUser.getAge(), aUser.getPoints(), aUser.getFavs().toString());
     wasAdded = true;
     return wasAdded;
   }
@@ -200,6 +116,7 @@ public class RegistrationManager
     if (users.contains(aUser))
     {
       users.remove(aUser);
+      sql.deleteUser(aUser.getId());
       wasRemoved = true;
     }
     return wasRemoved;
@@ -214,6 +131,7 @@ public class RegistrationManager
       if(index > numberOfUsers()) { index = numberOfUsers() - 1; }
       users.remove(aUser);
       users.add(index, aUser);
+
       wasAdded = true;
     }
     return wasAdded;
@@ -237,68 +155,78 @@ public class RegistrationManager
     return wasAdded;
   }
 
-  public static int minimumNumberOfEvents()
+  public static int minimumNumberOfLocations()
   {
     return 0;
   }
 
-  public boolean addEvent(Event aEvent)
+  public boolean addLocation(Location aLocation)
   {
     boolean wasAdded = false;
-    if (events.contains(aEvent)) { return false; }
-    events.add(aEvent);
+    if (locations.contains(aLocation)) { return false; }
+    locations.add(aLocation);
+    sql.insertLocation(aLocation.getId(), aLocation.getName(), aLocation.getStrtNum(),
+                       aLocation.getAddress(), aLocation.getQTime(), aLocation.getCheckTimes().toString());
     wasAdded = true;
     return wasAdded;
   }
 
-  public boolean removeEvent(Event aEvent)
+  public boolean removeLocation(Location aLocation)
   {
     boolean wasRemoved = false;
-    if (events.contains(aEvent))
+    if (locations.contains(aLocation))
     {
-      events.remove(aEvent);
+      locations.remove(aLocation);
+      sql.deleteLocation(aLocation.getId());
       wasRemoved = true;
     }
     return wasRemoved;
   }
 
-  public boolean addEventAt(Event aEvent, int index)
+  public boolean addLocationAt(Location aLocation, int index)
   {
     boolean wasAdded = false;
-    if(addEvent(aEvent))
+    if(addLocation(aLocation))
     {
       if(index < 0 ) { index = 0; }
-      if(index > numberOfEvents()) { index = numberOfEvents() - 1; }
-      events.remove(aEvent);
-      events.add(index, aEvent);
+      if(index > numberOfLocations()) { index = numberOfLocations() - 1; }
+      locations.remove(aLocation);
+      locations.add(index, aLocation);
       wasAdded = true;
     }
     return wasAdded;
   }
 
-  public boolean addOrMoveEventAt(Event aEvent, int index)
+  public boolean addOrMoveLocationAt(Location aLocation, int index)
   {
     boolean wasAdded = false;
-    if(events.contains(aEvent))
+    if(locations.contains(aLocation))
     {
       if(index < 0 ) { index = 0; }
-      if(index > numberOfEvents()) { index = numberOfEvents() - 1; }
-      events.remove(aEvent);
-      events.add(index, aEvent);
+      if(index > numberOfLocations()) { index = numberOfLocations() - 1; }
+      locations.remove(aLocation);
+      locations.add(index, aLocation);
       wasAdded = true;
     }
     else
     {
-      wasAdded = addEventAt(aEvent, index);
+      wasAdded = addLocationAt(aLocation, index);
     }
     return wasAdded;
   }
 
+  public void setUsers(ArrayList<User> users) {
+    this.users = users;
+  }
+
+  public void setLocations(ArrayList<Location> locations) {
+    this.locations = locations;
+  }
+
   public void delete()
   {
-    registrations.clear();
     users.clear();
-    events.clear();
+    locations.clear();
   }
 
 }

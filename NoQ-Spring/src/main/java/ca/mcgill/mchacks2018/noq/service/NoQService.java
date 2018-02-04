@@ -1,15 +1,12 @@
 package ca.mcgill.mchacks2018.noq.service;
 
-import java.sql.Date;
-import java.sql.Time;
-import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import ca.mcgill.mchacks2018.noq.model.Event;
 import ca.mcgill.mchacks2018.noq.model.User;
-import ca.mcgill.mchacks2018.noq.model.Registration;
+import ca.mcgill.mchacks2018.noq.model.Location;
 import ca.mcgill.mchacks2018.noq.model.RegistrationManager;
 import ca.mcgill.mchacks2018.noq.persistence.PersistenceXStream;
 
@@ -25,15 +22,15 @@ public class NoQService {
 		return rm.getUsers();
 	}
 
-	public List<Event> findAllEvents() {
-		return rm.getEvents();
+	public List<Location> findAllLocations() {
+		return rm.getLocations();
 	}
 
 	public void resetDatabase() {
 		rm.delete();
 	}
 
-	public User createUser(String username, String password, int age, int points) throws InvalidInputException {
+	public User createUser(String username, String password, int age, int points, JSONObject favs) throws InvalidInputException {
 		if (username == null || username.trim().length() == 0)
 			throw new InvalidInputException("Username cannot be empty!");
 		if (password == null || password.trim().length() == 0)
@@ -41,7 +38,7 @@ public class NoQService {
 		if (age < 0)
 			throw new InvalidInputException("Age must be positive!");
 
-		User u = new User(username, password, age, points);
+		User u = new User(username, password, age, points, favs);
 		for (User user : rm.getUsers()) {
 			if (user.getUsername().equals(u.getUsername())) {
 				throw new InvalidInputException("Username is already taken!");
@@ -49,57 +46,36 @@ public class NoQService {
 		}
 
 		rm.addUser(u);
-		PersistenceXStream.saveToXMLwithXStream(rm);
+		PersistenceXStream.sql.insertUser(u.getId(), u.getUsername(), u.getPassword(), u.getAge(), u.getPoints(), u.getFavs().toString());
 		return u;
 	}
 
-	public List<Event> getEventsForUser(User u) {
-		List<Event> userEvents = new ArrayList<Event>();
+	public Location createLocation(String id, String name, String strtNum, String address, int qTime, JSONObject checkTimes) throws InvalidInputException {
+		if (id == null || name.trim().length() == 0)
+			throw new InvalidInputException("Location name cannot be empty!");
+		if (name == null || name.trim().length() == 0)
+			throw new InvalidInputException("Location name cannot be empty!");
+		if (strtNum == null || strtNum.trim().length() == 0)
+			throw new InvalidInputException("Location street number cannot be empty!");
+		if (address == null || address.trim().length() == 0)
+			throw new InvalidInputException("Location address cannot be empty!");
+		if (qTime < -1)
+			throw new InvalidInputException("Location queue times cannot be negative!");
+		if (checkTimes == null)
+			throw new InvalidInputException("Location check times cannot be null!");
 
-		for (Registration registration : rm.getRegistrations()) {
-			if (registration.getUser().equals(u))
-				userEvents.add(registration.getEvent());
-		}
-
-		return userEvents;
-	}
-
-	public Event createEvent(String name, Date date, Time startTime, Time endTime) throws InvalidInputException {
-		if (name == null || date == null || startTime == null || endTime == null)
-			throw new InvalidInputException("Event name cannot be empty! Event date cannot be empty! Event start time cannot be empty! Event end time cannot be empty!");
-		if (name.trim().length() == 0)
-			throw new InvalidInputException("Event name cannot be empty!");
-		if (endTime.before(startTime))
-			throw new InvalidInputException("Event end time cannot be before event start time!");
-
-		Event e = new Event(name, date, startTime, endTime);
-		for (Event event : rm.getEvents()) {
-			if (event.getName().equals(e.getName()) && event.getEventDate().equals(e.getEventDate()) && event.getStartTime().equals(e.getStartTime()) && event.getEndTime().equals(e.getEndTime())) {
-				throw new InvalidInputException("Cannot create identical events!");
+		Location l = new Location(id, name, strtNum, address, qTime, checkTimes);
+		for (Location location : rm.getLocations()) {
+			if (location.getId().equals(l.getId()) && location.getName().equals(l.getName())
+				&& location.getStrtNum().equals(l.getStrtNum()) && location.getAddress().equals(l.getAddress())
+				&& location.getQTime() == l.getQTime() && location.getCheckTimes().toString().equals(l.getCheckTimes().toString())) {
+				throw new InvalidInputException("Cannot create identical locations!");
 			}
 		}
 
-		rm.addEvent(e);
-		PersistenceXStream.saveToXMLwithXStream(rm);
-		return e;
-	}
-
-	public Registration register(User user, Event event) throws InvalidInputException {
-		if (user == null || event == null)
-			throw new InvalidInputException("User needs to be selected for registration! Event needs to be selected for registration!");
-		if (!rm.getEvents().contains(event) || !rm.getUsers().contains(user))
-			throw new InvalidInputException("User does not exist! Event does not exist!");
-
-		Registration registration = new Registration(user, event);
-		for (Registration reg : rm.getRegistrations()) {
-			if (reg.getEvent().getName().equals(registration.getEvent().getName()) && reg.getUser().getUsername().equals(registration.getUser().getUsername())) {
-				throw new InvalidInputException("Cannot register multiple times for the same event!");
-			}
-		}
-
-		rm.addRegistration(registration);
-		PersistenceXStream.saveToXMLwithXStream(rm);
-		return registration;
+		rm.addLocation(l);
+		PersistenceXStream.sql.insertLocation(l.getId(), l.getName(), l.getStrtNum(), l.getAddress(), l.getQTime(), l.getCheckTimes().toString());
+		return l;
 	}
 
 	public User getUserByName(String username) throws InvalidInputException {
@@ -110,11 +86,11 @@ public class NoQService {
 		throw new InvalidInputException("User does not exist!");
 	}
 
-	public Event getEventByName(String name) throws InvalidInputException {
-		for (Event event : rm.getEvents()) {
-			if (event.getName().equals(name))
-				return event;
+	public Location getLocationById(String id) throws InvalidInputException {
+		for (Location location : rm.getLocations()) {
+			if (location.getName().equals(id))
+				return location;
 		}
-		throw new InvalidInputException("Event does not exist!");
+		throw new InvalidInputException("Location does not exist!");
 	}
 }

@@ -3,8 +3,10 @@
 
 package ca.mcgill.mchacks2018.noq.model;
 
-// line 3 "../../../../../EventRegistration.ump"
-// line 34 "../../../../../EventRegistration.ump"
+import org.json.JSONObject;
+
+// line 3 "../../../../../NoQ.ump"
+// line 29 "../../../../../NoQ.ump"
 public class User
 {
 
@@ -23,6 +25,7 @@ public class User
   private String password;
   private int age;
   private int points;
+  private JSONObject favs;
 
   //Autounique Attributes
   private int id;
@@ -31,13 +34,23 @@ public class User
   // CONSTRUCTOR
   //------------------------
 
-  public User(String aUsername, String aPassword, int aAge, int aPoints)
+  public User(String aUsername, String aPassword, int aAge, int aPoints, JSONObject aFavs)
   {
     username = aUsername;
     password = aPassword;
     age = aAge;
     points = aPoints;
+    favs = aFavs;
     id = nextId++;
+  }
+
+  public User(String aUsername, String aPassword, int aAge, int aPoints, JSONObject aFavs, boolean init) {
+    username = aUsername;
+    password = aPassword;
+    age = aAge;
+    points = aPoints;
+    favs = aFavs;
+    id = nextId;
   }
 
   //------------------------
@@ -76,6 +89,14 @@ public class User
     return wasSet;
   }
 
+  public boolean setFavs(JSONObject aFavs)
+  {
+    boolean wasSet = false;
+    favs = aFavs;
+    wasSet = true;
+    return wasSet;
+  }
+
   public String getUsername()
   {
     return username;
@@ -96,6 +117,11 @@ public class User
     return points;
   }
 
+  public JSONObject getFavs()
+  {
+    return favs;
+  }
+
   public int getId()
   {
     return id;
@@ -112,6 +138,7 @@ public class User
             "username" + ":" + getUsername()+ "," +
             "password" + ":" + getPassword()+ "," +
             "age" + ":" + getAge()+ "," +
-            "points" + ":" + getPoints()+ "]";
+            "points" + ":" + getPoints()+ "]" + System.getProperties().getProperty("line.separator") +
+            "  " + "favs" + "=" + (getFavs() != null ? !getFavs().equals(this)  ? getFavs().toString().replaceAll("  ","    ") : "this" : "null");
   }
 }

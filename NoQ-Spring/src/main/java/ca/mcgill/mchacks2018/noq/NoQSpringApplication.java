@@ -41,7 +41,7 @@ public class NoQSpringApplication extends SpringBootServletInitializer {
 
 	@Bean
 	public RegistrationManager regMan() {
-		return PersistenceXStream.initializeModelManager(PersistenceXStream.getFilename());
+		return PersistenceXStream.initializeModelManager();
 	}
 
 	// Enable CORS globally

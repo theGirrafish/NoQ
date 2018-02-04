@@ -5,26 +5,39 @@ import org.json.*;
 import java.sql.*;
 import java.io.File;
 import java.util.HashMap;
+import java.util.ArrayList;
+
+import ca.mcgill.mchacks2018.noq.model.User;
+import ca.mcgill.mchacks2018.noq.model.Location;
 
 public class SQLiteJDBC {
-    static private Connection c;
-    static private Statement stmt;
+    private static Connection c;
+    private static Statement stmt;
+    private static String dbPath;
+    private static SQLiteJDBC sql = new SQLiteJDBC();
 
+    private SQLiteJDBC() {
+    }
+
+    public static SQLiteJDBC getInstance() {
+        return sql;
+    }
 
     // ==============================
     // CONNECTION API
     // ==============================
 
     // Connect to a database
-    public static void connect() {
+    public void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
 
             // Create a connection to the database
             String dbDir = new File(System.getProperty("user.dir")).getParent();
-            String urlUsers = String.format("jdbc:sqlite:%s/db/users.db", dbDir);
+            dbPath = dbDir + "/db/users_locations.db";
 
-            c = DriverManager.getConnection(urlUsers);
+            String url = String.format("jdbc:sqlite:%s", dbPath);
+            c = DriverManager.getConnection(url);
             System.out.println("Connection to SQLite has been established.");
 
             // Users DB Table
@@ -38,7 +51,7 @@ public class SQLiteJDBC {
 
             // Locations DB Table
             String sqlLocations = "CREATE TABLE IF NOT EXISTS LOCATIONS "
-                                + "(ID INT PRIMARY KEY      NOT NULL,"
+                                + "(ID TEXT PRIMARY KEY     NOT NULL,"
                                 + " NAME           CHAR(50) NOT NULL,"
                                 + " STRTNUM        CHAR(50) NOT NULL,"
                                 + " ADDRESS        CHAR(50) NOT NULL,"
@@ -54,7 +67,7 @@ public class SQLiteJDBC {
     }
 
     // Close connection to database
-    public static void closeConnection() {
+    public void closeConnection() {
         try {
             if (stmt != null)
                 stmt.close();
@@ -71,7 +84,7 @@ public class SQLiteJDBC {
     // ==============================
 
     // Add new user to Users Table
-    public static void insertUser(int id, String username, String password, int age, int points, String favs) {
+    public void insertUser(int id, String username, String password, int age, int points, String favs) {
         // User Insert Info
         String insertUser = String.format("INSERT INTO USERS (ID, USERNAME, PASSWORD, AGE, POINTS, FAVS) "
                                         + "VALUES (%d, '%s', '%s', %d, %d, %s);", id, username, password, age, points, favs);
@@ -84,7 +97,7 @@ public class SQLiteJDBC {
     }
 
     // Update a user's password in Users Table
-    public static void updateUserPassword(int id, String password) {
+    public void updateUserPassword(int id, String password) {
         try {
             String updatePass = String.format("UPDATE USERS SET PASSWORD = '%s' WHERE ID = %d;", password, id);
             stmt.executeUpdate(updatePass);
@@ -94,7 +107,7 @@ public class SQLiteJDBC {
     }
 
     // Update a user's points in Users Table
-    public static void updateUserPoints(int id, int points) {
+    public void updateUserPoints(int id, int points) {
         try {
             String updatePoints = String.format("UPDATE USERS SET POINTS = %d WHERE ID = %d;", points, id);
             stmt.executeUpdate(updatePoints);
@@ -104,7 +117,7 @@ public class SQLiteJDBC {
     }
 
     // Delete a user in Users Table
-    public static void deleteUser(int id) {
+    public void deleteUser(int id) {
         try {
             String userDelete = String.format("DELETE FROM USERS WHERE ID = %d;", id);
             stmt.executeUpdate(userDelete);
@@ -113,8 +126,25 @@ public class SQLiteJDBC {
         }
     }
 
+    // Get all user data
+    public ArrayList<User> getUserAll() {
+        ArrayList<User> userList = new ArrayList<User>();
+        try {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM USERS");
+
+            while (rs.next())
+                userList.add(new User(rs.getString("NAME"), rs.getString("PASSWORD"),
+                                      rs.getInt("AGE"), rs.getInt("POINTS"), new JSONObject(rs.getString("FAVS"))));
+
+            rs.close();
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+        }
+        return userList;
+    }
+
     // Get all user Id, Username, Password
-    public static HashMap<String, String[]> getUsers() {
+    public HashMap<String, String[]> getUsers() {
         HashMap<String, String[]> userList = new HashMap<String, String[]>();
         try {
             ResultSet rs = stmt.executeQuery("SELECT ID, USERNAME, PASSWORD FROM USERS;");
@@ -130,7 +160,7 @@ public class SQLiteJDBC {
     }
 
     // Get a user's age using id and username
-    public static int getUserAge(int id, String username) {
+    public int getUserAge(int id, String username) {
         int age = -1;
         try {
             ResultSet rs = stmt.executeQuery(String.format("SELECT USERNAME, AGE FROM USERS WHERE ID = %d;", id));
@@ -148,7 +178,7 @@ public class SQLiteJDBC {
     }
 
     // Get a user's point using id and username
-    public static int getUserPoints(int id, String username) {
+    public int getUserPoints(int id, String username) {
         int points = -1;
         try {
             ResultSet rs = stmt.executeQuery(String.format("SELECT USERNAME, POINTS FROM USERS WHERE ID = %d;", id));
@@ -166,7 +196,7 @@ public class SQLiteJDBC {
     }
 
     // Get a user's favorite locations using id and username
-    public static JSONObject getUserFavs(int id, String username) {
+    public JSONObject getUserFavs(int id, String username) {
         JSONObject favs = null;
         try {
             ResultSet rs = stmt.executeQuery(String.format("SELECT USERNAME, FAVS FROM USERS WHERE ID = %d;", id));
@@ -189,10 +219,10 @@ public class SQLiteJDBC {
     // ==============================
 
     // Add new location to Locations Table
-    public static void insertLocation(int id, String name, String streetNum, String address, int qTime, String checkTimes) {
+    public void insertLocation(String id, String name, String streetNum, String address, int qTime, String checkTimes) {
         // Locations Insert Info
         String insertLocation = String.format("INSERT INTO LOCATIONS (ID, NAME, STRTNUM, ADDRESS, QTIME, CHECKTIMES) "
-                                            + "VALUES (%d, '%s', %s, '%s', '%d', '%s');", id, name, streetNum, address, qTime, checkTimes);
+                                            + "VALUES (%s, '%s', %s, '%s', '%d', '%s');", id, name, streetNum, address, qTime, checkTimes);
 
         try {
             stmt.executeUpdate(insertLocation);
@@ -202,20 +232,37 @@ public class SQLiteJDBC {
     }
 
     // Delete a location in Locations Table
-    public static void deleteLocation(int id) {
+    public void deleteLocation(String id) {
         try {
-            String locationDelete = String.format("DELETE FROM LOCATIONS WHERE ID = %d;", id);
+            String locationDelete = String.format("DELETE FROM LOCATIONS WHERE ID = %s;", id);
             stmt.executeUpdate(locationDelete);
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
-    // Get a location's name and address using id
-    public static HashMap<Integer, String[]> getLocations(int id) {
-        HashMap<Integer, String[]> locationList = new HashMap<Integer, String[]>();
+    // Get all location data
+    public ArrayList<Location> getLocationAll() {
+        ArrayList<Location> locationList = new ArrayList<Location>();
         try {
-            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, STRTNUM, ADDRESS FROM LOCATIONS WHERE ID = %d;", id));
+            ResultSet rs = stmt.executeQuery("SELECT * FROM LOCATIONS");
+
+            while (rs.next())
+                locationList.add(new Location(rs.getString("ID"), rs.getString("NAME"), rs.getString("STRTNUM"),
+                                              rs.getString("ADDRESS"), rs.getInt("QTIME"), new JSONObject(rs.getString("CHECKTIMES"))));
+
+            rs.close();
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+        }
+        return locationList;
+    }
+
+    // Get a location's name and address using id
+    public HashMap<String, String[]> getLocations(String id) {
+        HashMap<String, String[]> locationList = new HashMap<String, String[]>();
+        try {
+            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, STRTNUM, ADDRESS FROM LOCATIONS WHERE ID = %s;", id));
 
             while (rs.next())
                 locationList.put(id, new String[] {rs.getString("NAME"), rs.getString("STRTNUM"), rs.getString("ADDRESS")});
@@ -228,10 +275,10 @@ public class SQLiteJDBC {
     }
 
     // Get a location's qtime using id and name
-    public static int getLocationQTime(int id, String name) {
+    public int getLocationQTime(String id, String name) {
         int qtime = -1;
         try {
-            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, QTIME FROM LOCATIONS WHERE ID = %d;", id));
+            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, QTIME FROM LOCATIONS WHERE ID = %s;", id));
 
             while (rs.next()) {
                 if (rs.getString("NAME").equals(name))
@@ -246,10 +293,10 @@ public class SQLiteJDBC {
     }
 
     // Get a location's checkTime object using id and name
-    public static JSONObject getLocationCheckTimes(int id, String name) {
+    public JSONObject getLocationCheckTimes(String id, String name) {
         JSONObject checkTimes = null;
         try {
-            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, CHECKTIMES FROM LOCATIONS WHERE ID = %d;", id));
+            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, CHECKTIMES FROM LOCATIONS WHERE ID = %s;", id));
 
             while (rs.next()) {
                 if (rs.getString("NAME").equals(name))
@@ -269,19 +316,23 @@ public class SQLiteJDBC {
     // ==============================
 
     // @param args the command line arguments
-    public static void main(String[] args) {
-        c = null;
-        stmt = null;
+    // public void main(String[] args) {
+    //     c = null;
+    //     stmt = null;
 
-        connect();
-        insertUser(2, "Abbas", "1q2w3e", 21, 100, "{}");
-        insertLocation(3, "Pizza Pizza", "1846", "Saint-Catherine Street", 600, "{}");
+    //     connect();
+    //     insertUser(2, "Abbas", "1q2w3e", 21, 100, "{}");
+    //     insertLocation(3, "Pizza Pizza", "1846", "Saint-Catherine Street", 600, "{}");
 
-        deleteUser(2);
-        deleteLocation(2);
+    //     deleteUser(2);
+    //     deleteLocation(2);
 
-        updateUserPassword(1, "fgtboi");
+    //     updateUserPassword(1, "fgtboi");
 
-        closeConnection();
+    //     closeConnection();
+    // }
+
+    public String getDbPath() {
+        return dbPath;
     }
 }

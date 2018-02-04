@@ -28,7 +28,7 @@ public class TestNoQService {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		PersistenceXStream.initializeModelManager("output" + File.separator + "data.xml");
+		PersistenceXStream.initializeModelManager("output/data.xml");
 	}
 
 	@AfterClass
