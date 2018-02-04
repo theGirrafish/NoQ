@@ -35,4 +35,5 @@
     <string name="option_report_wait">Report Wait</string>
     <string name="option_checkin">Check in</string>
     <string name="option_checkout">Check out</string>
+    <string name="title_activity_data_input">Information</string>
 </resources>
