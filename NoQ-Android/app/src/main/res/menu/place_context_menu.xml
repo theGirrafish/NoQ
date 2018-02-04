@@ -14,8 +14,11 @@
         android:id="@+id/place_wait"
         android:title="@string/place_wait"/>
     <item
-        android:id="@+id/option_report_wait"
-        android:title="@string/option_report_wait"/>
+        android:id="@+id/option_checkin"
+        android:title="@string/option_checkin"/>
+    <item
+        android:id="@+id/option_checkout"
+        android:title="@string/option_checkout"/>
     <item
         android:id="@+id/option_add_favorites"
         android:title="@string/option_add_favorites"/>

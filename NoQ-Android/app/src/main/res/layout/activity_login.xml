@@ -114,6 +114,7 @@
                 android:alpha="0.60"
                 android:background="@drawable/button_bg_rounded_corners"
                 android:onClick="switchToRegister"
+                android:textStyle="bold"
                 android:text="@string/action_sign_up" />
 
             <Button
