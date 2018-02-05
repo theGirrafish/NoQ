@@ -66,10 +66,10 @@
         android:id="@+id/my_recycler_view"
         android:layout_width="381dp"
         android:layout_height="280dp"
-        android:layout_below="@+id/appbar"
         android:padding="50dp"
         android:scrollbars="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
 
 
 
