@@ -66,6 +66,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
     private EditText mAgeView;
     private View mProgressView;
     private View mLoginFormView;
+    public static String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -397,6 +398,7 @@ public class RegisterActivity extends AppCompatActivity implements LoaderCallbac
                 }
             });
 
+            username = mUsername;
             return true;
         }
 

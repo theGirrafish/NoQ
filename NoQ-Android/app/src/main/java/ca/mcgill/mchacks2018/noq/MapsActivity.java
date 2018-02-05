@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
@@ -17,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -44,7 +46,17 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.Calendar;
+
+import cz.msebera.android.httpclient.Header;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 import static com.google.android.gms.location.places.AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT;
@@ -76,6 +88,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private ArrayList<Marker> markers = new ArrayList<>();
     private ArrayList<Place> places = new ArrayList<>();
+    private long checkInTime;
+    private long checkOutTime;
+    private boolean checkedIn = false;
+    private boolean checkedOut = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +114,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        //Ignore running outside AsyncTask
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
     }
 
     @Override
@@ -307,7 +327,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //            // The user has not granted permission.
 //            Log.i(TAG, "The user did not grant location permission.");
 //
-//            // Add a default marker, because the user hasn't selected a place.
+//            // Add a de]'fault marker, because the user hasn't selected a place.
 //            mMap.addMarker(new MarkerOptions()
 //                    .title(getString(R.string.default_info_title))
 //                    .position(mDefaultLocation)
@@ -416,7 +436,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (marker.equals(placeMarker)) {
                             popupMenu.getMenu().findItem(R.id.place_name).setTitle(place.getName());
                             popupMenu.getMenu().findItem(R.id.place_address).setTitle(place.getAddress());
-//                            popupMenu.getMenu().findItem(R.id.place_wait).setTitle();
+                            popupMenu.getMenu().findItem(R.id.place_wait).setTitle((Integer.toString(getWaitTime(place))));
                             popupMenu.show();
                             popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                                 @Override
@@ -441,7 +461,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     final Place existingPlace = places.get(i);
                                     popupMenu.getMenu().findItem(R.id.place_name).setTitle(existingPlace.getName());
                                     popupMenu.getMenu().findItem(R.id.place_address).setTitle(existingPlace.getAddress());
-//                                    popupMenu.getMenu().findItem(R.id.place_wait).setTitle();
+                                    popupMenu.getMenu().findItem(R.id.place_wait).setTitle(Integer.toString(getWaitTime(existingPlace)));
                                     popupMenu.show();
                                     popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                                         @Override
@@ -506,15 +526,119 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mLastKnownLocation = location;
     }
 
-    public void checkIn(Place place) {
+    public void checkIn(final Place place) {
+        if (!checkedIn) {
+            HttpUtils.get(String.format("/locations/%s", place.getId()), new RequestParams(), new JsonHttpResponseHandler() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
 
+                }
+
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                    String placeName = replace(place.getName().toString());
+                    String placeAddress = replace(place.getAddress().toString());
+                    HttpUtils.post(String.format("/locations/%s?name=%s&strtNum=%s&address=%s", place.getId(), placeName, "1", placeAddress), new RequestParams(), new JsonHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable1, JSONObject errorResponse) {
+                            System.out.println(statusCode);
+                        }
+                    });
+                }
+            });
+
+            checkInTime = Calendar.getInstance().getTimeInMillis() / 1000;
+            String checkInTimeString = Long.toString(checkInTime);
+            HttpUtils.patch(String.format("/locations/checkIn/%s/?username=%s&checkIn=%s/", place.getId(), getUsername(), checkInTimeString), new RequestParams(), new JsonHttpResponseHandler());
+            checkedIn = true;
+            checkedOut = false;
+
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "Already checked in!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 
-    public void checkOut(Place place) {
-
+    public void checkOut(final Place place) {
+        if (!checkedOut) {
+            checkOutTime = Calendar.getInstance().getTimeInMillis() / 1000;
+            String checkOutTimeString = Long.toString(checkInTime);
+            checkedIn = false;
+            checkedOut = true;
+            HttpUtils.patch(String.format("/locations/checkOut/%s/?username=%s&checkOut=%s/", place.getId(), getUsername(), checkOutTimeString), new RequestParams(), new JsonHttpResponseHandler());
+        }
+        else {
+            Toast toast = Toast.makeText(getApplicationContext(), "Already checked out!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 
     public void addToFavorites(Place place) {
         
+    }
+
+    public int getWaitTime(final Place place) {
+        final int[] waitTime = new int[1];
+        waitTime[0] = -1;
+
+        HttpUtils.get(String.format("/locations/%s", place.getId()), new RequestParams(), new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                try {
+                    waitTime[0] = response.getInt("qTime");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                String placeName = replace(place.getName().toString());
+                String placeAddress = replace(place.getAddress().toString());
+                placeAddress = placeAddress.replaceAll(",", "%2C");
+                System.out.println("Place Name: " + placeName);
+                System.out.println("Place Address: " + placeAddress);
+                HttpUtils.post(String.format("/locations/%s/?name=%s&strtNum=%s&address=%s", place.getId(), placeName, "1", placeAddress), new RequestParams(), new JsonHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                    }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable throwable1, JSONObject errorResponse) {
+                        System.out.println(statusCode);
+                    }
+                });
+            }
+        });
+        return waitTime[0];
+    }
+
+    public String getUsername() {
+        if (RegisterActivity.username != null) {
+            return RegisterActivity.username;
+        } else if (LoginActivity.username != null) {
+            return LoginActivity.username;
+        } else {
+            System.out.println("USER NULL");
+            return "testUser";
+        }
+
+    }
+
+    public String replace(String str) {
+        String[] words = str.split(" ");
+        StringBuilder sentence = new StringBuilder(words[0]);
+
+        for (int i = 1; i < words.length; ++i) {
+            sentence.append("%20");
+            sentence.append(words[i]);
+        }
+
+        return sentence.toString();
     }
 }

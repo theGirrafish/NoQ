@@ -237,6 +237,62 @@ public class SQLiteJDBC {
         }
     }
 
+    // Update a location's qTime in Locations Table
+    public void updateLocationQTime(String id, int qTime) {
+        try {
+            String updateQTime = String.format("UPDATE LOCATIONS SET QTIME = %d WHERE ID = '%s';", qTime, id);
+            stmt.executeUpdate(updateQTime);
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    // Update a location's checkIn time in Locations Table
+    public JSONObject updateLocationCheckIn(String id, String username, String checkIn) {
+        JSONObject lCheckTimes = getLocationCheckTimes(id);
+        try {
+            JSONObject times;
+
+            if (lCheckTimes.has(username))
+                times = (JSONObject) lCheckTimes.get(username);
+            else
+                times = new JSONObject("{}");
+
+            times.put("checkIn", checkIn);
+            lCheckTimes.put(username, times);
+
+            String updateCheckIn = String.format("UPDATE LOCATIONS SET CHECKTIMES = '%s' WHERE ID = '%s';", lCheckTimes.toString(), id);
+            stmt.executeUpdate(updateCheckIn);
+            return lCheckTimes;
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+        }
+        return null;
+    }
+
+    // Update a location's checkOut time in Locations Table
+    public JSONObject updateLocationCheckOut(String id, String username, String checkOut) {
+        JSONObject lCheckTimes = getLocationCheckTimes(id);
+        try {
+            JSONObject times;
+
+            if (lCheckTimes.has(username))
+                times = (JSONObject) lCheckTimes.get(username);
+            else
+                times = new JSONObject("{}");
+
+            times.put("checkOut", checkOut);
+            lCheckTimes.put(username, times);
+
+            String updateCheckOut = String.format("UPDATE LOCATIONS SET CHECKTIMES = '%s' WHERE ID = '%s';", lCheckTimes.toString(), id);
+            stmt.executeUpdate(updateCheckOut);
+            return lCheckTimes;
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+        }
+        return null;
+    }
+
     // Delete a location in Locations Table
     public void deleteLocation(String id) {
         try {
@@ -281,15 +337,13 @@ public class SQLiteJDBC {
     }
 
     // Get a location's qtime using id and name
-    public int getLocationQTime(String id, String name) {
+    public int getLocationQTime(String id) {
         int qtime = -1;
         try {
-            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, QTIME FROM LOCATIONS WHERE ID = '%s';", id));
+            ResultSet rs = stmt.executeQuery(String.format("SELECT QTIME FROM LOCATIONS WHERE ID = '%s';", id));
 
-            while (rs.next()) {
-                if (rs.getString("NAME").equals(name))
-                    qtime = rs.getInt("QTIME");
-            }
+            while (rs.next())
+                qtime = rs.getInt("QTIME");
 
             rs.close();
         } catch (Exception e) {
@@ -299,15 +353,13 @@ public class SQLiteJDBC {
     }
 
     // Get a location's checkTime object using id and name
-    public JSONObject getLocationCheckTimes(String id, String name) {
+    public JSONObject getLocationCheckTimes(String id) {
         JSONObject checkTimes = null;
         try {
-            ResultSet rs = stmt.executeQuery(String.format("SELECT NAME, CHECKTIMES FROM LOCATIONS WHERE ID = '%s';", id));
+            ResultSet rs = stmt.executeQuery(String.format("SELECT CHECKTIMES FROM LOCATIONS WHERE ID = '%s';", id));
 
-            while (rs.next()) {
-                if (rs.getString("NAME").equals(name))
-                    checkTimes = new JSONObject(rs.getString("CHECKTIMES"));
-            }
+            while (rs.next())
+                checkTimes = new JSONObject(rs.getString("CHECKTIMES"));
 
             rs.close();
         } catch (Exception e) {
