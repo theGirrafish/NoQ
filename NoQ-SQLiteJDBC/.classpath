@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="lib" path="/home/student/git/NoQ/NoQ-SQLiteJDBC/lib/sqlite-jdbc-3.21.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/home/student/git/NoQ/NoQ-SQLiteJDBC/lib/java-json.jar"/>
-	<classpathentry exported="true" kind="lib" path="/home/student/git/NoQ/NoQ-SQLiteJDBC/lib/model.jar"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>
